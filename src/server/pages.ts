@@ -35,6 +35,11 @@ footer { margin-top: 2vh; color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.5
 .choice.correct { background: var(--good); color: #10200f; }
 #board { margin-top: 3vh; font-size: clamp(1.2rem, 2vw, 2rem); }
 #board ol { margin: .5em 0 0; padding-left: 1.5em; }
+#popup { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(20,12,6,.82); padding: 6vw; text-align: center; }
+#popup[hidden] { display: none; }
+#popup div { background: #fff6e8; color: #2b1d14; border-radius: 2vw; padding: 5vh 4vw; font-size: clamp(2rem, 5vw, 5rem); font-weight: 800; line-height: 1.2; max-width: 90vw; word-wrap: break-word; animation: pop .35s ease-out; }
+@keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #popup div { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .row, .choice .bar { transition: none; } }
 </style></head>
 <body>
@@ -46,6 +51,7 @@ footer { margin-top: 2vh; color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.5
   <ol id="list"></ol>
   <footer id="count"></footer>
 </div>
+<div id="popup" hidden><div id="popupText"></div></div>
 <div id="trivia" hidden>
   <p id="timer"></p>
   <p id="question"></p>
@@ -59,7 +65,7 @@ let trivia = false;
 async function load() {
   const res = await fetch('/api/state', { cache: 'no-store' });
   const s = await res.json();
-  trivia = s.kind === 'trivia';
+  trivia = s.kind !== 'ranked';
   document.getElementById('title').textContent = s.title;
   document.getElementById('round').textContent = 'Step ' + s.stepNumber + ' of ' + s.stepCount + ': ' + s.roundTitle;
   document.getElementById('joinUrl').textContent = s.joinUrl;
@@ -87,13 +93,36 @@ function renderRanked(s) {
 }
 
 function renderTrivia(s) {
-  document.getElementById('question').textContent = s.question.prompt;
+  const isRating = s.kind === 'rating';
+  if (s.kind === 'writein') {
+    document.getElementById('question').textContent = s.prompt;
+    document.getElementById('timer').textContent = s.votingOpen ? 'Send your answer on your phone' : 'Answers are closed';
+    document.getElementById('choices').replaceChildren();
+    document.getElementById('board').hidden = true;
+    document.getElementById('tcount').textContent = s.ballotCount + ' answer(s) in';
+    const shown = s.shownTexts || [];
+    const popup = document.getElementById('popup');
+    popup.hidden = shown.length === 0;
+    document.getElementById('popupText').textContent = shown.length ? shown[shown.length - 1] : '';
+    return;
+  }
+  document.getElementById('popup').hidden = true;
+  document.getElementById('question').textContent = s.prompt;
   const timer = document.getElementById('timer');
-  timer.textContent = s.revealed ? 'Answer revealed' : (s.votingOpen ? (s.secondsLeft + ' seconds') : 'Voting closed');
+  if (s.kind === 'trivia') {
+    timer.textContent = s.revealed ? 'Answer revealed' : (s.votingOpen ? (s.secondsLeft + ' seconds') : 'Voting closed');
+  } else {
+    timer.textContent = s.revealed ? 'Results' : (s.votingOpen ? 'Voting is open' : 'Voting closed');
+  }
+  const options = isRating ? Array.from({ length: s.scale }, (_, i) => String(i + 1)) : (s.choices || s.question.choices);
   const total = s.counts.reduce((a, b) => a + b, 0);
-  const choices = s.question.choices.map((text, i) => {
+  const winners = s.winners || [];
+  const choices = options.map((text, i) => {
     const li = document.createElement('li');
-    li.className = 'choice' + (s.revealed && s.question.correctIndex === i ? ' correct' : '');
+    let cls = 'choice';
+    if (s.revealed && s.kind === 'trivia' && s.correctIndex === i) cls += ' correct';
+    if (s.revealed && winners.includes(i)) cls += ' correct';
+    li.className = cls;
     const bar = document.createElement('div'); bar.className = 'bar';
     bar.style.width = total === 0 ? '0%' : Math.round((s.counts[i] / total) * 100) + '%';
     const label = document.createElement('span'); label.className = 'label'; label.textContent = text;
@@ -102,9 +131,14 @@ function renderTrivia(s) {
     return li;
   });
   document.getElementById('choices').replaceChildren(...choices);
-  document.getElementById('tcount').textContent = s.ballotCount + ' answer(s) in · ' + s.question.points + ' points';
+  const footer = s.kind === 'trivia'
+    ? s.ballotCount + ' answer(s) in · ' + s.question.points + ' points'
+    : s.ballotCount + ' vote(s) in';
+  let extra = '';
+  if (s.kind === 'rating' && s.average !== undefined && s.revealed) extra = ' · Average: ' + s.average;
+  document.getElementById('tcount').textContent = footer + extra;
   const board = document.getElementById('board');
-  board.hidden = !s.revealed || s.leaderboard.length === 0;
+  board.hidden = s.kind !== 'trivia' || !s.revealed || s.leaderboard.length === 0;
   document.getElementById('boardList').replaceChildren(...s.leaderboard.map((row) => {
     const li = document.createElement('li');
     li.textContent = row.name + ' · ' + row.points + ' pts';
@@ -166,7 +200,7 @@ function render() {
   if (document.activeElement !== document.getElementById('name')) {
     document.getElementById('name').value = state.yourName || '';
   }
-  if (state.kind === 'trivia') return renderTrivia();
+  if (state.kind !== 'ranked') return renderTrivia();
   if (!state.votingOpen && !state.youHaveVoted) return closedMessage('Voting is closed for this round. Watch the TV!');
   if (state.youHaveVoted) return closedMessage('Thanks! Your vote is in.');
   submit.hidden = false;
@@ -189,32 +223,78 @@ function render() {
 function renderTrivia() {
   const submit = document.getElementById('submit');
   submit.hidden = true;
-  document.getElementById('hint').textContent = state.question.prompt;
+  document.getElementById('hint').textContent = state.prompt;
+  const msg = document.getElementById('msg');
+  if (state.kind === 'writein') return renderWriteIn();
+  const isRating = state.kind === 'rating';
+  const options = isRating ? Array.from({ length: state.scale }, (_, i) => String(i + 1)) : (state.choices || state.question.choices);
   if (state.revealed) {
-    const mine = state.yourChoice;
-    const msg = mine === undefined ? 'You did not answer this one.' : (mine === state.question.correctIndex ? 'Correct!' : 'Not this time.');
-    document.getElementById('msg').textContent = msg;
+    if (state.kind === 'trivia') {
+      msg.textContent = state.yourChoice === undefined ? 'You did not answer this one.' : (state.yourChoice === state.question.correctIndex ? 'Correct!' : 'Not this time.');
+    } else {
+      msg.textContent = state.yourChoice === undefined ? 'Results are on the TV.' : 'Thanks! Results are on the TV.';
+    }
   } else if (state.youHaveVoted) {
-    document.getElementById('msg').textContent = 'Answer locked in. Waiting for the reveal…';
+    msg.textContent = 'Answer locked in. Waiting for the reveal…';
   } else if (!state.votingOpen) {
-    document.getElementById('msg').textContent = 'Time is up.';
+    msg.textContent = 'Voting is closed.';
   } else {
-    document.getElementById('msg').textContent = '';
+    msg.textContent = '';
   }
   const open = state.votingOpen && !state.youHaveVoted && !state.revealed;
-  document.getElementById('items').replaceChildren(...state.question.choices.map((text, i) => {
+  document.getElementById('items').replaceChildren(...options.map((text, i) => {
     const btn = document.createElement('button');
     const cls = ['item'];
-    if (state.revealed && state.question.correctIndex === i) cls.push('correct');
-    if (state.yourChoice === i) cls.push('picked');
+    if (state.revealed && state.kind === 'trivia' && state.question.correctIndex === i) cls.push('correct');
+    if (state.revealed && state.winners && state.winners.includes(i)) cls.push('correct');
+    const mine = isRating && state.yourChoice !== undefined ? state.yourChoice - 1 : state.yourChoice;
+    if (mine === i) cls.push('picked');
     btn.className = cls.join(' ');
     btn.disabled = !open;
-    const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = String.fromCharCode(65 + i);
-    const label = document.createElement('span'); label.textContent = text;
+    const badge = document.createElement('span'); badge.className = 'badge';
+    badge.textContent = isRating ? text : String.fromCharCode(65 + i);
+    const label = document.createElement('span'); label.textContent = isRating ? '' : text;
     btn.append(badge, label);
     btn.addEventListener('click', () => answer(i));
     return btn;
   }));
+}
+
+function renderWriteIn() {
+  const msg = document.getElementById('msg');
+  const items = document.getElementById('items');
+  if (state.youHaveVoted) {
+    items.replaceChildren(Object.assign(document.createElement('p'), { className: 'done', textContent: 'Thanks! Your answer is in.' }));
+    msg.textContent = '';
+    return;
+  }
+  if (!state.votingOpen) {
+    items.replaceChildren(Object.assign(document.createElement('p'), { className: 'done', textContent: 'Answers are closed for this one.' }));
+    msg.textContent = '';
+    return;
+  }
+  const box = document.createElement('textarea');
+  box.id = 'writein';
+  box.maxLength = state.maxLength;
+  box.rows = 3;
+  box.placeholder = 'Type your answer';
+  box.style.cssText = 'width:100%;font:inherit;padding:12px;border-radius:12px;border:0;';
+  const send = document.createElement('button');
+  send.className = 'item picked';
+  send.style.justifyContent = 'center';
+  send.textContent = 'Send my answer';
+  send.addEventListener('click', async () => {
+    const res = await fetch('/api/ballot', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ stepId: state.stepId, text: box.value }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) msg.textContent = body.error || 'Something went wrong. Please try again.';
+    await load();
+  });
+  items.replaceChildren(box, send);
+  msg.textContent = 'Keep it short and kind. Nobody will see who wrote it.';
 }
 
 async function answer(choice) {
@@ -222,7 +302,7 @@ async function answer(choice) {
   const res = await fetch('/api/ballot', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ stepId: state.stepId, choice }),
+    body: JSON.stringify(state.kind === 'rating' ? { stepId: state.stepId, rating: choice + 1 } : { stepId: state.stepId, choice }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) msg.textContent = body.error || 'Something went wrong. Please try again.';
@@ -287,6 +367,7 @@ button:disabled { opacity: .4; }
 <body>
 <h1>Host controls</h1>
 <div id="status">Loading…</div>
+<div id="wi"></div>
 <button id="reveal" hidden>Reveal answer</button>
 <button id="toggle">Close voting</button>
 <button id="next">Next</button>
@@ -297,11 +378,33 @@ const token = new URLSearchParams(location.search).get('token') || '';
 const headers = { 'content-type': 'application/json', 'x-host-token': token };
 let st = null;
 function show() {
-  const what = st.kind === 'trivia' ? st.question.prompt : st.roundTitle;
+  const what = st.kind === 'ranked' ? st.roundTitle : st.prompt;
   document.getElementById('status').textContent =
     st.title + ' · ' + st.stepNumber + ' of ' + st.stepCount + ': ' + what +
     ' · ' + (st.votingOpen ? 'Voting is OPEN' : 'Voting is CLOSED') + ' · ' + st.ballotCount + ' answer(s)';
-  document.getElementById('reveal').hidden = st.kind !== 'trivia' || st.revealed;
+  document.getElementById('reveal').hidden = st.kind === 'ranked' || st.kind === 'writein' || st.revealed;
+  const wi = document.getElementById('wi');
+  wi.replaceChildren();
+  if (st.kind === 'writein') {
+    const head = document.createElement('p'); head.className = 'help';
+    head.textContent = 'Only you can see these. Tap Show to put one answer on the TV.';
+    wi.appendChild(head);
+    for (const a of st.writeIns || []) {
+      const row = document.createElement('div');
+      row.style.cssText = 'background:rgba(255,255,255,.08);border-radius:14px;padding:12px;margin:8px 0;';
+      const text = document.createElement('div'); text.textContent = a.text;
+      const btn = document.createElement('button');
+      btn.textContent = a.shown ? 'Shown' : 'Show on TV';
+      btn.disabled = a.shown;
+      btn.addEventListener('click', () => call('/api/host/show', { index: a.index }));
+      row.append(text, btn);
+      wi.appendChild(row);
+    }
+    if ((st.writeIns || []).length === 0) {
+      const none = document.createElement('p'); none.textContent = 'No answers yet.';
+      wi.appendChild(none);
+    }
+  }
   document.getElementById('toggle').textContent = st.votingOpen ? 'Close voting' : 'Open voting';
   document.getElementById('prev').disabled = st.stepNumber <= 1;
   document.getElementById('next').disabled = st.stepNumber >= st.stepCount;

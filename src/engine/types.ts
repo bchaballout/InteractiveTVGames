@@ -53,7 +53,79 @@ export interface TriviaRound {
   config: TriviaConfig;
 }
 
-export type Round = RankedPicksRound | TriviaRound;
+/** A poll: guests pick one choice. Results are shown live, with no right answer. */
+export interface PollQuestion {
+  id: string;
+  prompt: string;
+  choices: string[];
+}
+
+export interface PollRound {
+  id: string;
+  type: "poll";
+  title: string;
+  questions: PollQuestion[];
+}
+
+/** A rating: guests pick a number from 1 to scale. The TV shows the average after reveal. */
+export interface RatingQuestion {
+  id: string;
+  prompt: string;
+}
+
+export interface RatingRound {
+  id: string;
+  type: "rating";
+  title: string;
+  questions: RatingQuestion[];
+  config: { scale: 5 | 10 };
+}
+
+/** Superlatives: guests vote for one person or dish from the listed entries. */
+export interface SuperlativeQuestion {
+  id: string;
+  prompt: string;
+  /** Entries that may be voted for. */
+  entryIds: string[];
+}
+
+export interface SuperlativeRound {
+  id: string;
+  type: "superlatives";
+  title: string;
+  questions: SuperlativeQuestion[];
+}
+
+/** Head-to-head: two entries, one matchup per question. Guests vote for one of the two. */
+export interface HeadToHeadRound {
+  id: string;
+  type: "head-to-head";
+  title: string;
+  questions: SuperlativeQuestion[];
+}
+
+/** Write-ins: guests type a short anonymous answer. The host shows them one at a time. */
+export interface WriteInQuestion {
+  id: string;
+  prompt: string;
+}
+
+export interface WriteInRound {
+  id: string;
+  type: "write-ins";
+  title: string;
+  questions: WriteInQuestion[];
+  config: { maxLength: number };
+}
+
+export type Round =
+  | RankedPicksRound
+  | TriviaRound
+  | PollRound
+  | RatingRound
+  | SuperlativeRound
+  | HeadToHeadRound
+  | WriteInRound;
 
 export interface GameDefinition {
   schemaVersion: number;

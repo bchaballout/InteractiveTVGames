@@ -12,7 +12,7 @@ You are helping someone make a party game for their TV and phones. The person ma
 1. Ask only what you cannot guess: the game's purpose, the entries (people or things to vote on), and the round types.
 2. Write `examples/<game-id>/game.json` (or a folder the person names). Use `schemaVersion: 1`.
 3. Entries need unique lowercase `id`s. Rounds refer to entries by `id`.
-4. Run `npm run validate -- examples/<game-id>/game.json` (once the CLI helper exists) or call `validateGame()`. Fix every error.
+4. Run `npm run validate -- examples/<game-id>/game.json` or call `validateGame()`. Fix every error. `npm run new-game -- <id>` starts from a template.
 5. Tell the person what they still need to provide: photos, names, the TV theme, anything else.
 
 ## Rules

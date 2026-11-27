@@ -14,7 +14,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check": "npm run typecheck && npm run build && npm test",
     "start": "node dist/server/main.js",
-    "validate": "node dist/cli/validate.js"
+    "validate": "node dist/cli/validate.js",
+    "new-game": "node dist/cli/new-game.js",
+    "new-round-type": "node dist/cli/new-round-type.js",
+    "export": "node dist/cli/export.js export",
+    "import": "node dist/cli/export.js import",
+    "builder": "node dist/builder/main.js"
   },
   "devDependencies": {
     "@types/node": "22.20.7",

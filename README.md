@@ -2,15 +2,30 @@
 
 An open-source engine for phone-and-TV party games. Clone it, describe the game you want to Claude, and get a working game you can put on your TV.
 
-> Status: early build. The room server, TV page and phone voting work. The QR code and the other round types are still to come.
+> Status: working build. Seven round types, a room server, a TV screen, phone voting, host controls, a QR code and a browser game builder. Not yet tested on real phones or in a live game night.
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `npm install` | Installs everything (once) |
+| `npm start` | Runs the game on this computer. Prints the TV link, phone link, QR code and host link |
+| `npm run builder` | Opens the game builder at http://localhost:4000 |
+| `npm run validate -- <game.json>` | Checks a game file and lists every problem |
+| `npm run new-game -- <id>` | Creates `examples/<id>/game.json` from a starter |
+| `npm run new-round-type -- <name>` | Creates a new round type folder and a test |
+| `npm run export -- <game.json> <out.json>` | Writes a checked copy of a game |
+| `npm run import -- <game.json>` | Checks a shared game and saves it under `examples/` |
+| `npm run check` | Type check, build and all tests |
 
 ## What works today
 
 - A game format (`game.json`) with schema version 1 and a validator that reports every error at once.
+- Seven round types: ranked picks, trivia (timed, speed bonus), poll, rating, superlatives, head-to-head and write-ins.
 - Ranked picks: guests rank up to N entries; points by rank; tied totals share a rank (1, 1, 3).
 - One vote per browser, enforced in the ballot store. Exact retries are counted once.
 - Live rooms: add an entry mid-game without changing the room id, join code, or existing ballots.
-- The Thanksgiving Cook-off example game (`examples/thanksgiving-cookoff/`).
+- Example games: Thanksgiving Cook-off, Trivia Night and Office Superlatives.
 
 ## Quick start
 
@@ -19,7 +34,7 @@ npm install
 npm run check
 ```
 
-`npm run check` runs the type checks, the tests (12 at the moment) and the build.
+`npm run check` runs the type checks, the build and all tests.
 
 ## Making your own game
 

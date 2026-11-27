@@ -72,6 +72,16 @@ export function validateGame(input: unknown): ValidationResult {
       validateRankedPicks(round, where, entryIds, errors);
     } else if (round.type === "trivia") {
       validateTrivia(round, where, errors);
+    } else if (round.type === "poll") {
+      validatePoll(round, where, errors);
+    } else if (round.type === "rating") {
+      validateRating(round, where, errors);
+    } else if (round.type === "superlatives") {
+      validateSuperlatives(round, where, entryIds, errors, 2);
+    } else if (round.type === "head-to-head") {
+      validateSuperlatives(round, where, entryIds, errors, 2, 2);
+    } else if (round.type === "write-ins") {
+      validateWriteIns(round, where, errors);
     } else {
       errors.push(`${where}.type "${String(round.type)}" is not a known round type.`);
     }
@@ -147,6 +157,114 @@ function validateTrivia(round: Record<string, unknown>, where: string, errors: s
     }
     if (!isInt(q.points, 1, 1000)) {
       errors.push(`${at}.points must be a whole number from 1 to 1000.`);
+    }
+  });
+}
+
+function validateChoices(choices: unknown, at: string, errors: string[], max: number): boolean {
+  if (
+    !Array.isArray(choices) ||
+    choices.length < 2 ||
+    choices.length > max ||
+    choices.some((c) => typeof c !== "string" || c.trim() === "")
+  ) {
+    errors.push(`${at}.choices must be 2 to ${max} non-empty answers.`);
+    return false;
+  }
+  return true;
+}
+
+function validatePoll(round: Record<string, unknown>, where: string, errors: string[]) {
+  if (!Array.isArray(round.questions) || round.questions.length === 0) {
+    errors.push(`${where}.questions must be a non-empty list.`);
+    return;
+  }
+  const seen = new Set<string>();
+  round.questions.forEach((q, j) => {
+    const at = `${where}.questions[${j}]`;
+    if (!isObject(q) || typeof q.id !== "string" || !ID_PATTERN.test(q.id)) {
+      errors.push(`${at}.id must be lowercase letters, numbers and dashes.`);
+      return;
+    }
+    if (seen.has(q.id)) errors.push(`${at}.id "${q.id}" is used more than once.`);
+    seen.add(q.id);
+    if (typeof q.prompt !== "string" || q.prompt.trim() === "") errors.push(`${at}.prompt is required.`);
+    validateChoices(q.choices, at, errors, 8);
+  });
+}
+
+function validateRating(round: Record<string, unknown>, where: string, errors: string[]) {
+  const config = isObject(round.config) ? round.config : undefined;
+  if (!config || (config.scale !== 5 && config.scale !== 10)) {
+    errors.push(`${where}.config.scale must be 5 or 10.`);
+  }
+  if (!Array.isArray(round.questions) || round.questions.length === 0) {
+    errors.push(`${where}.questions must be a non-empty list.`);
+    return;
+  }
+  const seen = new Set<string>();
+  round.questions.forEach((q, j) => {
+    const at = `${where}.questions[${j}]`;
+    if (!isObject(q) || typeof q.id !== "string" || !ID_PATTERN.test(q.id)) {
+      errors.push(`${at}.id must be lowercase letters, numbers and dashes.`);
+      return;
+    }
+    if (seen.has(q.id)) errors.push(`${at}.id "${q.id}" is used more than once.`);
+    seen.add(q.id);
+    if (typeof q.prompt !== "string" || q.prompt.trim() === "") errors.push(`${at}.prompt is required.`);
+  });
+}
+
+function validateWriteIns(round: Record<string, unknown>, where: string, errors: string[]) {
+  const config = isObject(round.config) ? round.config : undefined;
+  if (!config || !isInt(config.maxLength, 10, 280)) {
+    errors.push(`${where}.config.maxLength must be a whole number from 10 to 280.`);
+  }
+  if (!Array.isArray(round.questions) || round.questions.length === 0) {
+    errors.push(`${where}.questions must be a non-empty list.`);
+    return;
+  }
+  const seen = new Set<string>();
+  round.questions.forEach((q, j) => {
+    const at = `${where}.questions[${j}]`;
+    if (!isObject(q) || typeof q.id !== "string" || !ID_PATTERN.test(q.id)) {
+      errors.push(`${at}.id must be lowercase letters, numbers and dashes.`);
+      return;
+    }
+    if (seen.has(q.id)) errors.push(`${at}.id "${q.id}" is used more than once.`);
+    seen.add(q.id);
+    if (typeof q.prompt !== "string" || q.prompt.trim() === "") errors.push(`${at}.prompt is required.`);
+  });
+}
+
+function validateSuperlatives(
+  round: Record<string, unknown>,
+  where: string,
+  entryIds: Set<string>,
+  errors: string[],
+  minEntries: number,
+  maxEntries = 100,
+) {
+  if (!Array.isArray(round.questions) || round.questions.length === 0) {
+    errors.push(`${where}.questions must be a non-empty list.`);
+    return;
+  }
+  const seen = new Set<string>();
+  round.questions.forEach((q, j) => {
+    const at = `${where}.questions[${j}]`;
+    if (!isObject(q) || typeof q.id !== "string" || !ID_PATTERN.test(q.id)) {
+      errors.push(`${at}.id must be lowercase letters, numbers and dashes.`);
+      return;
+    }
+    if (seen.has(q.id)) errors.push(`${at}.id "${q.id}" is used more than once.`);
+    seen.add(q.id);
+    if (typeof q.prompt !== "string" || q.prompt.trim() === "") errors.push(`${at}.prompt is required.`);
+    if (!Array.isArray(q.entryIds) || q.entryIds.length < minEntries || q.entryIds.length > maxEntries) {
+      errors.push(`${at}.entryIds must list ${minEntries === maxEntries ? "exactly " + minEntries : "at least " + minEntries} entries.`);
+    } else {
+      for (const id of q.entryIds) {
+        if (typeof id !== "string" || !entryIds.has(id)) errors.push(`${at}.entryIds refers to unknown entry "${String(id)}".`);
+      }
     }
   });
 }

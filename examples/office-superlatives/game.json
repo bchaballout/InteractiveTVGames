@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "office-superlatives",
+  "title": "Office Superlatives",
+  "theme": { "accent": "#7b5cd6", "background": "#161427", "text": "#f3f0ff" },
+  "entries": [
+    { "id": "priya", "name": "Priya", "subtitle": "Desk: by the window" },
+    { "id": "sam", "name": "Sam", "subtitle": "Desk: near the printer" },
+    { "id": "lee", "name": "Lee", "subtitle": "Desk: the corner" }
+  ],
+  "rounds": [
+    {
+      "id": "superlatives",
+      "type": "superlatives",
+      "title": "Most likely to…",
+      "questions": [
+        { "id": "email-all", "prompt": "Most likely to reply-all by accident", "entryIds": ["priya", "sam", "lee"] },
+        { "id": "lunch-tupperware", "prompt": "Most likely to bring the best lunch", "entryIds": ["priya", "sam", "lee"] }
+      ]
+    },
+    {
+      "id": "snack-poll",
+      "type": "poll",
+      "title": "Snack poll",
+      "questions": [
+        { "id": "best-snack", "prompt": "Best office snack?", "choices": ["Popcorn", "Fruit", "Cookies"] }
+      ]
+    },
+    {
+      "id": "friday-vibe",
+      "type": "rating",
+      "title": "Friday vibe",
+      "config": { "scale": 5 },
+      "questions": [
+        { "id": "vibe", "prompt": "How was this week?" }
+      ]
+    }
+  ]
+}

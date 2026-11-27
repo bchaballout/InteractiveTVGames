@@ -26,7 +26,7 @@ one later does not break existing votes.
 ## Rounds
 
 Every round has `id`, `type`, `title`, and a `config` for its type.
-Two types exist in schema version 1: `"ranked-picks"` and `"trivia"`.
+Schema version 1 has seven round types: `ranked-picks`, `trivia`, `poll`, `rating`, `superlatives`, `head-to-head` and `write-ins`. See `round-types.md` for what guests and the TV see.
 
 ### `ranked-picks`
 
@@ -73,3 +73,39 @@ Two types exist in schema version 1: `"ranked-picks"` and `"trivia"`.
 - `speedBonusMax`: a correct answer earns `points` plus a bonus that shrinks from this maximum to zero at the time limit.
 - `correctIndex`: 0 is the first choice. The answer is hidden from guests and the TV until the host reveals it.
 - Guests may enter a name for the scoreboard. Scores are shown only for revealed questions.
+
+### `poll`
+
+```json
+{ "id": "snacks", "type": "poll", "title": "Snacks", "questions": [
+  { "id": "best", "prompt": "Best office snack?", "choices": ["Popcorn", "Fruit", "Cookies"] } ] }
+```
+
+Choices: 2 to 8. Results are live and there is no right answer.
+
+### `rating`
+
+```json
+{ "id": "vibe", "type": "rating", "title": "Vibe", "config": { "scale": 5 },
+  "questions": [ { "id": "week", "prompt": "How was this week?" } ] }
+```
+
+`scale` is 5 or 10. Guests pick a whole number from 1 to scale. The average is shown after reveal.
+
+### `superlatives` and `head-to-head`
+
+```json
+{ "id": "awards", "type": "superlatives", "title": "Most likely to…",
+  "questions": [ { "id": "reply-all", "prompt": "Most likely to reply-all by accident", "entryIds": ["priya", "sam", "lee"] } ] }
+```
+
+Superlatives need at least 2 entries. Head-to-head needs exactly 2. Entries are listed in `entries` at the top of the game.
+
+### `write-ins`
+
+```json
+{ "id": "wins", "type": "write-ins", "title": "Biggest win", "config": { "maxLength": 80 },
+  "questions": [ { "id": "win", "prompt": "What was your biggest win this year?" } ] }
+```
+
+Guests type anonymous answers. Only the host sees them all, and chooses which to show on the TV, one at a time.
