@@ -98,6 +98,12 @@ function render() {
   const submit = document.getElementById('submit');
   if (!state) return;
   document.getElementById('round').textContent = state.round.title;
+  if (!state.votingOpen && !state.youHaveVoted) {
+    items.replaceChildren(Object.assign(document.createElement('p'), { className: 'done', textContent: 'Voting is closed for this round. Watch the TV!' }));
+    document.getElementById('hint').textContent = '';
+    submit.hidden = true;
+    return;
+  }
   if (state.youHaveVoted) {
     items.replaceChildren(Object.assign(document.createElement('p'), { className: 'done', textContent: 'Thanks! Your vote is in.' }));
     document.getElementById('hint').textContent = '';
@@ -153,6 +159,55 @@ document.getElementById('submit').addEventListener('click', async () => {
   if (res.status === 409) await load();
 });
 
+load();
+</script>
+</body></html>`;
+
+export const HOST_PAGE = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Host</title>
+<style>${STYLE}
+body { padding: 16px; max-width: 560px; margin: 0 auto; }
+h1 { font-size: 1.3rem; }
+#status { background: rgba(255,255,255,.08); border-radius: 14px; padding: 14px; margin: 12px 0; line-height: 1.5; }
+button { display: block; width: 100%; min-height: 56px; border: 0; border-radius: 14px; padding: 14px; margin: 10px 0; font-size: 1.05rem; font-weight: 700; background: var(--accent); color: #2b1d14; }
+button.secondary { background: rgba(255,255,255,.12); color: var(--text); }
+button:disabled { opacity: .4; }
+#msg { min-height: 1.2em; color: var(--muted); }
+</style></head>
+<body>
+<h1>Host controls</h1>
+<div id="status">Loading…</div>
+<button id="toggle">Close voting</button>
+<button id="next">Next round</button>
+<button id="prev" class="secondary">Previous round</button>
+<p id="msg" role="status"></p>
+<script>
+const token = new URLSearchParams(location.search).get('token') || '';
+const headers = { 'content-type': 'application/json', 'x-host-token': token };
+let st = null;
+function show() {
+  document.getElementById('status').textContent =
+    st.title + ' · Round ' + st.roundNumber + ' of ' + st.roundCount + ': ' + st.round.title +
+    ' · ' + (st.votingOpen ? 'Voting is OPEN' : 'Voting is CLOSED') + ' · ' + st.ballotCount + ' vote(s)';
+  document.getElementById('toggle').textContent = st.votingOpen ? 'Close voting' : 'Open voting';
+  document.getElementById('prev').disabled = st.roundNumber <= 1;
+  document.getElementById('next').disabled = st.roundNumber >= st.roundCount;
+}
+async function call(path, body) {
+  const res = await fetch(path, { method: 'POST', headers, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { document.getElementById('msg').textContent = data.error || 'Something went wrong.'; return; }
+  st = data; document.getElementById('msg').textContent = ''; show();
+}
+document.getElementById('toggle').addEventListener('click', () => call('/api/host/voting', { open: !st.votingOpen }));
+document.getElementById('next').addEventListener('click', () => call('/api/host/next'));
+document.getElementById('prev').addEventListener('click', () => call('/api/host/previous'));
+async function load() {
+  const res = await fetch('/api/host/state', { headers });
+  if (!res.ok) { document.getElementById('status').textContent = 'Open the link from the host computer\'s terminal.'; return; }
+  st = await res.json(); show();
+}
 load();
 </script>
 </body></html>`;

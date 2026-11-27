@@ -9,10 +9,11 @@ import type { GameDefinition } from "../src/engine/types.js";
 
 const game = JSON.parse(readFileSync(join(process.cwd(), "examples/thanksgiving-cookoff/game.json"), "utf8")) as GameDefinition;
 let server: Server;
+const TOKEN = "test-host-token-0123456789";
 let base = "";
 
 before(async () => {
-  server = await createRoomServer({ game, joinUrl: "http://192.168.1.20:3000/join" });
+  server = await createRoomServer({ game, joinUrl: "http://192.168.1.20:3000/join", hostToken: TOKEN });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -107,4 +108,27 @@ test("live updates are pushed to open screens when a vote arrives", async () => 
   const { value } = await reader.read();
   assert.match(decoder.decode(value), /event: update/);
   await reader.cancel();
+});
+
+test("host controls need the secret token", async () => {
+  assert.equal((await fetch(base + "/host")).status, 403);
+  assert.equal((await fetch(base + "/api/host/state")).status, 403);
+  assert.equal((await fetch(base + "/api/host/state?token=wrong")).status, 403);
+  assert.equal((await fetch(base + "/api/host/state?token=" + TOKEN)).status, 200);
+});
+
+test("host can close voting, and guests are refused while it is closed", async () => {
+  const host = (path: string, body?: unknown) =>
+    fetch(base + path + "?token=" + TOKEN, { method: "POST", headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  assert.equal((await host("/api/host/voting", { open: false })).status, 200);
+  const guest = browser();
+  const refused = await guest("/api/ballot", ballot(["gravy"]));
+  assert.equal(refused.status, 409);
+  assert.equal((await host("/api/host/voting", { open: true })).status, 200);
+  assert.equal((await guest("/api/ballot", ballot(["gravy"]))).status, 200);
+});
+
+test("host bad request is refused with a readable message", async () => {
+  const res = await fetch(base + "/api/host/voting?token=" + TOKEN, { method: "POST", body: "{}" });
+  assert.equal(res.status, 400);
 });
