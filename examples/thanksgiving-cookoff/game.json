@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "thanksgiving-cookoff",
+  "title": "Thanksgiving Cook-off",
+  "theme": { "accent": "#e07a2f", "background": "#2b1d14", "text": "#fff6e8" },
+  "entries": [
+    { "id": "cranberry-sauce", "name": "Cranberry sauce", "subtitle": "Cook: Aunt Rosa" },
+    { "id": "gravy", "name": "Gravy", "subtitle": "Cook: Uncle Sam" },
+    { "id": "pot-roast", "name": "Pot roast", "subtitle": "Cook: Mom" },
+    { "id": "green-beans", "name": "Green beans", "subtitle": "Cook: Cousin Maya" }
+  ],
+  "rounds": [
+    {
+      "id": "dish-overall",
+      "type": "ranked-picks",
+      "title": "Overall dish",
+      "entryIds": ["cranberry-sauce", "gravy", "pot-roast", "green-beans"],
+      "config": { "maxPicks": 3, "points": [3, 2, 1] }
+    }
+  ]
+}

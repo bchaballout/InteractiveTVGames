@@ -1,0 +1,21 @@
+{
+  "name": "party-game-engine",
+  "version": "0.1.0",
+  "description": "An open-source engine for phone-and-TV party games. Describe a game to Claude and play it on your TV in minutes.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.test.json && node --test dist-test/test/*.test.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.7",
+    "typescript": "5.9.3"
+  }
+}
