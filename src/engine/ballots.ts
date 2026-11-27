@@ -14,7 +14,7 @@ export type SubmitResult =
   | { status: "already-submitted" }
   | { status: "conflict" };
 
-export class BallotBox<TBallot extends string[] | string> {
+export class BallotBox<TBallot> {
   private readonly byKey = new Map<string, TBallot>();
 
   submit(roundId: string, voterId: string, ballot: TBallot): SubmitResult {

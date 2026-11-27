@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "trivia-night",
+  "title": "Trivia Night",
+  "theme": { "accent": "#3a7bd5", "background": "#101a2b", "text": "#eef4ff" },
+  "entries": [],
+  "rounds": [
+    {
+      "id": "world-capitals",
+      "type": "trivia",
+      "title": "World capitals",
+      "config": { "questionSeconds": 20, "speedBonusMax": 50 },
+      "questions": [
+        { "id": "q-france", "prompt": "What is the capital of France?", "choices": ["Paris", "Rome", "Madrid", "Berlin"], "correctIndex": 0, "points": 100 },
+        { "id": "q-japan", "prompt": "What is the capital of Japan?", "choices": ["Kyoto", "Osaka", "Tokyo"], "correctIndex": 2, "points": 100 },
+        { "id": "q-canada", "prompt": "What is the capital of Canada?", "choices": ["Toronto", "Ottawa", "Vancouver"], "correctIndex": 1, "points": 150 }
+      ]
+    }
+  ]
+}

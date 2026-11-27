@@ -10,11 +10,12 @@ A round type is one folder under `src/rounds/<type-name>/`. It must export:
 
 | Type | Status |
 | --- | --- |
-| `ranked-picks` | Scoring and validation done (`src/rounds/ranked-picks/scoring.ts`). Phone and TV UI not built yet. |
+| `ranked-picks` | Done: scoring, validation, phone and TV screens. |
+| `trivia` | Done: timed questions, speed bonus, anonymous answer counts, reveal, leaderboard by nickname. |
 
 ## Planned (from the build brief)
 
-Single-choice poll, trivia, write-ins, rating scale, head-to-head bracket, superlatives.
+Single-choice poll, write-ins, rating scale, head-to-head bracket, superlatives.
 
 ## Adding a new round type
 

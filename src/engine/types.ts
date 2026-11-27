@@ -28,8 +28,32 @@ export interface RankedPicksRound {
   config: RankedPicksConfig;
 }
 
-/** Round types are validated by their own config schema. Unknown types are rejected. */
-export type Round = RankedPicksRound;
+export interface TriviaQuestion {
+  id: string;
+  prompt: string;
+  choices: string[];
+  /** Index into choices (0 = first). */
+  correctIndex: number;
+  /** Points for a correct answer, before the speed bonus. */
+  points: number;
+}
+
+export interface TriviaConfig {
+  /** Seconds guests have to answer each question. */
+  questionSeconds: number;
+  /** Extra points for answering fast: full bonus at 0 seconds, none at the limit. */
+  speedBonusMax: number;
+}
+
+export interface TriviaRound {
+  id: string;
+  type: "trivia";
+  title: string;
+  questions: TriviaQuestion[];
+  config: TriviaConfig;
+}
+
+export type Round = RankedPicksRound | TriviaRound;
 
 export interface GameDefinition {
   schemaVersion: number;
@@ -37,6 +61,7 @@ export interface GameDefinition {
   title: string;
   /** Optional theme: colours as CSS strings. */
   theme?: { accent?: string; background?: string; text?: string };
+  /** Things guests vote on. May be empty for games made only of trivia. */
   entries: Entry[];
   rounds: Round[];
 }

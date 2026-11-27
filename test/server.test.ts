@@ -6,6 +6,7 @@ import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
 import { createRoomServer } from "../src/server/room-server.js";
 import type { GameDefinition } from "../src/engine/types.js";
+import { validateGame } from "../src/engine/validate.js";
 
 const game = JSON.parse(readFileSync(join(process.cwd(), "examples/thanksgiving-cookoff/game.json"), "utf8")) as GameDefinition;
 let server: Server;
@@ -33,7 +34,7 @@ function browser() {
 const ballot = (picks: string[]) => ({
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: JSON.stringify({ roundId: "dish-overall", picks }),
+  body: JSON.stringify({ stepId: "dish-overall", picks }),
 });
 
 test("TV page and phone page are served", async () => {
@@ -90,7 +91,7 @@ test("bad ballots are rejected with a readable message", async () => {
   assert.equal(repeated.status, 400);
   const unknown = await guest("/api/ballot", ballot(["not-a-dish"]));
   assert.equal(unknown.status, 400);
-  const wrongRound = await guest("/api/ballot", { ...ballot(["gravy"]), body: JSON.stringify({ roundId: "nope", picks: ["gravy"] }) });
+  const wrongRound = await guest("/api/ballot", { ...ballot(["gravy"]), body: JSON.stringify({ stepId: "nope", picks: ["gravy"] }) });
   assert.equal(wrongRound.status, 400);
 });
 
@@ -131,4 +132,9 @@ test("host can close voting, and guests are refused while it is closed", async (
 test("host bad request is refused with a readable message", async () => {
   const res = await fetch(base + "/api/host/voting?token=" + TOKEN, { method: "POST", body: "{}" });
   assert.equal(res.status, 400);
+});
+
+test("example trivia game is valid", () => {
+  const trivia = JSON.parse(readFileSync(join(process.cwd(), "examples/trivia-night/game.json"), "utf8"));
+  assert.deepEqual(validateGame(trivia), { ok: true, errors: [] });
 });

@@ -26,7 +26,7 @@ one later does not break existing votes.
 ## Rounds
 
 Every round has `id`, `type`, `title`, and a `config` for its type.
-Only `"ranked-picks"` exists in schema version 1.
+Two types exist in schema version 1: `"ranked-picks"` and `"trivia"`.
 
 ### `ranked-picks`
 
@@ -53,3 +53,23 @@ Only `"ranked-picks"` exists in schema version 1.
 - entries[0].name is required.
 - rounds[0].entryIds refers to unknown entry "ghost-dish".
 ```
+
+### `trivia`
+
+```json
+{
+  "id": "world-capitals",
+  "type": "trivia",
+  "title": "World capitals",
+  "config": { "questionSeconds": 20, "speedBonusMax": 50 },
+  "questions": [
+    { "id": "q-japan", "prompt": "What is the capital of Japan?", "choices": ["Kyoto", "Osaka", "Tokyo"], "correctIndex": 2, "points": 100 }
+  ]
+}
+```
+
+- Each question is one screen. The host moves question by question and reveals the answer.
+- `questionSeconds`: time to answer, from 5 to 300. Answers after the time are refused.
+- `speedBonusMax`: a correct answer earns `points` plus a bonus that shrinks from this maximum to zero at the time limit.
+- `correctIndex`: 0 is the first choice. The answer is hidden from guests and the TV until the host reveals it.
+- Guests may enter a name for the scoreboard. Scores are shown only for revealed questions.

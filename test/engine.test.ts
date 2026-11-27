@@ -6,7 +6,7 @@ import { validateGame } from "../src/engine/validate.js";
 import { BallotBox } from "../src/engine/ballots.js";
 import { scoreRankedPicks } from "../src/rounds/ranked-picks/scoring.js";
 import { addEntryToRoom, type Room } from "../src/engine/room.js";
-import type { GameDefinition } from "../src/engine/types.js";
+import type { GameDefinition, RankedPicksRound } from "../src/engine/types.js";
 
 const game = JSON.parse(
   readFileSync(join(process.cwd(), "examples/thanksgiving-cookoff/game.json"), "utf8"),
@@ -80,7 +80,7 @@ test("schema: reports every problem at once", () => {
 
 test("schema: a round may only point at entries that exist", () => {
   const broken = structuredClone(game);
-  broken.rounds[0]!.entryIds.push("ghost-dish");
+  (broken.rounds[0] as RankedPicksRound).entryIds.push("ghost-dish");
   const result = validateGame(broken);
   assert.equal(result.ok, false);
   assert.ok(result.errors.some((e) => e.includes("ghost-dish")));
@@ -103,9 +103,9 @@ test("live room: adding an entry keeps the room id, join code and existing ballo
   assert.equal(updated.roomId, "room-42");
   assert.equal(updated.joinCode, "ABCD");
   assert.ok(updated.game.entries.some((e) => e.id === "stuffing"));
-  assert.ok(updated.game.rounds[0]!.entryIds.includes("stuffing"));
+  assert.ok((updated.game.rounds[0] as RankedPicksRound).entryIds.includes("stuffing"));
   assert.deepEqual(box.forRound("dish-overall"), [["gravy", "pot-roast", "green-beans"]]);
-  const scores = scoreRankedPicks(updated.game.rounds[0]!.entryIds, box.forRound("dish-overall"), config);
+  const scores = scoreRankedPicks((updated.game.rounds[0] as RankedPicksRound).entryIds, box.forRound("dish-overall"), config);
   assert.equal(scores.find((s) => s.entryId === "stuffing")?.points, 0, "new entry starts at zero");
 });
 

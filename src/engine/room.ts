@@ -21,7 +21,9 @@ export function addEntryToRoom(room: Room, entry: Entry, roundIds: string[] = []
     ...room.game,
     entries: [...room.game.entries, entry],
     rounds: room.game.rounds.map((round) =>
-      roundIds.includes(round.id) ? { ...round, entryIds: [...round.entryIds, entry.id] } : round,
+      roundIds.includes(round.id) && round.type === "ranked-picks"
+        ? { ...round, entryIds: [...round.entryIds, entry.id] }
+        : round,
     ),
   };
   const check = validateGame(nextGame);
