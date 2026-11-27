@@ -38,3 +38,13 @@ The assistant reads `CLAUDE.md` and `docs/game-format.md`, writes a game file, a
 ## Licence
 
 MIT. See `LICENSE`. Third-party material is listed in `NOTICE.md`.
+
+## How it runs (no hosting needed)
+
+There is no central server run by the author. Whoever downloads this repo runs it on their own computer:
+
+1. Install Node.js (version 22 or newer), then run `npm install` and `npm start`.
+2. Plug a laptop into the TV and open the TV page it shows (`http://localhost:...`).
+3. Guests scan the QR code on the TV with their phones. Phones must be on the same Wi-Fi as the laptop.
+
+Nothing leaves your home network unless you choose to put the app on the internet yourself. The `npm start` step is not built yet; this section describes the plan.
