@@ -17,7 +17,8 @@ header { display: flex; justify-content: space-between; align-items: center; gap
 h1 { font-size: clamp(2rem, 4vw, 4rem); margin: 0; }
 #round { font-size: clamp(1.4rem, 2.6vw, 2.6rem); color: var(--accent); margin: .3em 0 0; }
 #join { text-align: center; background: #fff6e8; color: #2b1d14; padding: 1vw; border-radius: 1vw; font-size: clamp(1rem, 1.6vw, 1.6rem); }
-#join code { font-size: 1.3em; word-break: break-all; }
+#join code { font-size: .8em; word-break: break-all; }
+#qr { display: block; margin: .5vw auto; background: #fff; border-radius: .5vw; width: min(22vw, 320px); height: auto; }
 #list { list-style: none; padding: 0; margin: 2vh 0 0; display: grid; gap: 1vh; }
 .row { display: grid; grid-template-columns: 4vw 1fr auto; align-items: center; gap: 1vw; background: rgba(255,255,255,.07); border-radius: 1vw; padding: 1vh 1.2vw; font-size: clamp(1.2rem, 2.2vw, 2.4rem); transition: transform .4s ease; }
 .row.leader { background: var(--accent); color: #2b1d14; }
@@ -29,7 +30,7 @@ footer { margin-top: 2vh; color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.5
 <body>
 <header>
   <div><h1 id="title">Loading…</h1><p id="round"></p></div>
-  <div id="join"><div>Scan to play</div><code id="joinUrl"></code></div>
+  <div id="join"><div>Scan to play</div><img id="qr" src="/qr.svg" alt="QR code to join" width="220" height="220"><div><code id="joinUrl"></code></div></div>
 </header>
 <ol id="list"></ol>
 <footer id="count"></footer>
@@ -41,17 +42,17 @@ async function load() {
   const s = await res.json();
   document.getElementById('title').textContent = s.title;
   document.getElementById('round').textContent = s.round.title;
-  document.getElementById('joinUrl').textContent = location.origin + '/join';
+  document.getElementById('joinUrl').textContent = s.joinUrl;
   document.getElementById('count').textContent = s.ballotCount + ' vote(s) so far';
   scoreById.clear();
   for (const sc of s.scores) scoreById.set(sc.entryId, sc);
   // Every entry shows from the start, even at zero points, ordered by score.
   const ordered = [...s.entries].sort((a, b) => (scoreById.get(a.id)?.rank ?? 99) - (scoreById.get(b.id)?.rank ?? 99));
   list.replaceChildren(...ordered.map((e) => {
-    const sc = scoreById.get(e.id) || { points: 0, rank: '-' };
+    const sc = scoreById.get(e.id) || { points: 0, rank: 0 };
     const li = document.createElement('li');
     li.className = 'row' + (sc.rank === 1 && sc.points > 0 ? ' leader' : '');
-    const rank = document.createElement('span'); rank.textContent = sc.rank;
+    const rank = document.createElement('span'); rank.textContent = sc.points > 0 ? String(sc.rank) : '–';
     const name = document.createElement('span'); name.textContent = e.name;
     if (e.subtitle) { const sub = document.createElement('span'); sub.className = 'sub'; sub.textContent = e.subtitle; name.appendChild(sub); }
     const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = sc.points + ' pts';

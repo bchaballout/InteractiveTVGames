@@ -8,17 +8,23 @@ import type { GameDefinition, Round } from "../engine/types.js";
 import { BallotBox } from "../engine/ballots.js";
 import { scoreRankedPicks } from "../rounds/ranked-picks/scoring.js";
 import { validateGame } from "../engine/validate.js";
+import QRCode from "qrcode";
 import { TV_PAGE, PHONE_PAGE } from "./pages.js";
 
 const VOTER_COOKIE = "pge_voter";
 
 export interface RoomServerOptions {
   game: GameDefinition;
+  /** Address phones should open, e.g. http://192.168.1.20:3000/join. Encoded in the QR code. */
+  joinUrl: string;
 }
 
-export function createRoomServer({ game }: RoomServerOptions): Server {
+export async function createRoomServer({ game, joinUrl }: RoomServerOptions): Promise<Server> {
   const check = validateGame(game);
   if (!check.ok) throw new Error(`Invalid game:\n- ${check.errors.join("\n- ")}`);
+
+  // The QR code is drawn once at startup, as an SVG picture of the phone address.
+  const qrSvg = await QRCode.toString(joinUrl, { type: "svg", margin: 1, errorCorrectionLevel: "M" });
 
   const ballots = new BallotBox<string[]>();
   const listeners = new Set<ServerResponse>();
@@ -35,6 +41,7 @@ export function createRoomServer({ game }: RoomServerOptions): Server {
     const mine = voterId ? hasVoted(round.id, voterId) : false;
     return {
       title: game.title,
+      joinUrl,
       theme: game.theme ?? {},
       round: { id: round.id, title: round.title, config: round.config, entryIds: round.entryIds },
       entries: game.entries.filter((e) => round.entryIds.includes(e.id)),
@@ -96,6 +103,9 @@ export function createRoomServer({ game }: RoomServerOptions): Server {
     try {
       if (method === "GET" && url.pathname === "/") {
         return send(res, 200, TV_PAGE, "text/html; charset=utf-8");
+      }
+      if (method === "GET" && url.pathname === "/qr.svg") {
+        return send(res, 200, qrSvg, "image/svg+xml; charset=utf-8");
       }
       if (method === "GET" && url.pathname === "/join") {
         return send(res, 200, PHONE_PAGE, "text/html; charset=utf-8", cookieHeaders);

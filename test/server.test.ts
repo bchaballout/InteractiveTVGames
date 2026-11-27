@@ -12,7 +12,7 @@ let server: Server;
 let base = "";
 
 before(async () => {
-  server = createRoomServer({ game });
+  server = await createRoomServer({ game, joinUrl: "http://192.168.1.20:3000/join" });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -42,6 +42,18 @@ test("TV page and phone page are served", async () => {
   const phone = await fetch(base + "/join");
   assert.equal(phone.status, 200);
   assert.match(await phone.text(), /Submit my ranking/);
+});
+
+test("QR code is served as a picture of the phone address", async () => {
+  const res = await fetch(base + "/qr.svg");
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get("content-type") ?? "", /image\/svg\+xml/);
+  assert.match(await res.text(), /<svg/);
+});
+
+test("state tells the TV which address to encode", async () => {
+  const state = await (await fetch(base + "/api/state")).json();
+  assert.equal(state.joinUrl, "http://192.168.1.20:3000/join");
 });
 
 test("state shows every entry from the start, at zero", async () => {
