@@ -2,7 +2,7 @@
 
 An open-source engine for phone-and-TV party games. Clone it, describe the game you want to Claude, and get a working game you can put on your TV.
 
-> Status: early build. The engine core, the game format and ranked-picks scoring work and are tested. The TV and phone screens are not built yet.
+> Status: early build. The room server, TV page and phone voting work. The QR code and the other round types are still to come.
 
 ## What works today
 
@@ -47,4 +47,4 @@ There is no central server run by the author. Whoever downloads this repo runs i
 2. Plug a laptop into the TV and open the TV page it shows (`http://localhost:...`).
 3. Guests scan the QR code on the TV with their phones. Phones must be on the same Wi-Fi as the laptop.
 
-Nothing leaves your home network unless you choose to put the app on the internet yourself. The `npm start` step is not built yet; this section describes the plan.
+Nothing leaves your home network unless you choose to put the app on the internet yourself. The TV and phone pages work now; the QR code on the TV is still to come, so for now type the phone address shown in the terminal.
