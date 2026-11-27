@@ -46,6 +46,9 @@ The assistant reads `CLAUDE.md` and `docs/game-format.md`, writes a game file, a
 
 ## Documentation
 
+- `CONTRIBUTING.md`: how to share games and round types.
+- `docs/community-game-template.md`: template for sharing a game.
+
 - `docs/game-format.md`: the game file, with examples.
 - `docs/round-types.md`: round types and how to add one.
 - `CLAUDE.md` / `AGENTS.md`: instructions for AI assistants.
