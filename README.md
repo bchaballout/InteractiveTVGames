@@ -46,6 +46,8 @@ The assistant reads `CLAUDE.md` and `docs/game-format.md`, writes a game file, a
 
 ## Documentation
 
+- `docs/adding-a-game.md`: how to make a game, with or without code.
+- `CODE_OF_CONDUCT.md`: how we treat each other.
 - `CONTRIBUTING.md`: how to share games and round types.
 - `docs/community-game-template.md`: template for sharing a game.
 
