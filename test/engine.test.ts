@@ -113,3 +113,14 @@ test("live room: refuses a duplicate entry id", () => {
   const room: Room = { roomId: "r", joinCode: "X", game: structuredClone(game) };
   assert.throws(() => addEntryToRoom(room, { id: "gravy", name: "Gravy again" }), /already exists/);
 });
+
+test("validate CLI: accepts the example and rejects a broken file", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const cli = join(process.cwd(), "dist/cli/validate.js");
+  const ok = execFileSync("node", [cli, join(process.cwd(), "examples/thanksgiving-cookoff/game.json")], { encoding: "utf8" });
+  assert.match(ok, /is a valid game/);
+  const bad = join(process.cwd(), "dist-test", "bad-game.json");
+  const { writeFileSync } = await import("node:fs");
+  writeFileSync(bad, JSON.stringify({ schemaVersion: 1, id: "x", title: "", entries: [], rounds: [] }));
+  assert.throws(() => execFileSync("node", [cli, bad], { encoding: "utf8", stdio: "pipe" }), /problem/);
+});
